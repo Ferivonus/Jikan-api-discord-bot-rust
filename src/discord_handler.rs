@@ -20,9 +20,11 @@ impl EventHandler for Handler {
             let help_message = "Hello! I'm an anime bot. Here are the commands you can use:\n\
                                 `!anime <anime name>`: Searches for anime and lists basic information.\n\
                                 `!anime details <MAL_ID>`: Fetches detailed information for a specific anime by its MyAnimeList ID.\n\
+                                `!anime recommendations <MAL_ID>`: Fetches anime recommendations based on a given MyAnimeList ID.\n\
                                 Example:\n\
                                 `!anime Attack on Titan`\n\
-                                `!anime details 16498` (for Attack on Titan)";
+                                `!anime details 16498` (for Attack on Titan)\n\
+                                `!anime recommendations 16498` (for Attack on Titan recommendations)";
             if let Err(why) = msg.channel_id.say(&ctx.http, help_message).await {
                 println!("Error sending help message: {:?}", why);
             }
@@ -168,11 +170,69 @@ impl EventHandler for Handler {
                 }
             }
         }
+        else if content.starts_with("!anime recommendations ") {
+            let parts: Vec<&str> = content.splitn(3, ' ').collect();
+
+            if parts.len() < 3 {
+                if let Err(why) = msg.reply(&ctx.http, "Please provide an anime ID for recommendations. Usage: `!anime recommendations <MAL_ID>`").await {
+                    println!("Error sending message: {:?}", why);
+                }
+                return;
+            }
+
+            let mal_id_str = parts[2].trim();
+            let mal_id = match mal_id_str.parse::<u32>() {
+                Ok(id) => id,
+                Err(_) => {
+                    if let Err(why) = msg.reply(&ctx.http, "Invalid MAL ID. Please provide a numeric ID.").await {
+                        println!("Error sending message: {:?}", why);
+                    }
+                    return;
+                }
+            };
+
+            if let Err(why) = msg.channel_id.say(&ctx.http, format!("Fetching recommendations for MAL ID: {}...", mal_id)).await {
+                println!("Error sending message: {:?}", why);
+            }
+
+            match jikan_api::get_anime_recommendations(mal_id).await {
+                Some(recommendations) => {
+                    if recommendations.is_empty() {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, format!("No recommendations found for MAL ID: {}.", mal_id)).await {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    } else {
+                        let mut response_message = format!("Recommendations for MAL ID {}:\n", mal_id);
+                        for (i, rec_item) in recommendations.iter().take(5).enumerate() {
+                            response_message.push_str(&format!("{}. **{}** (MAL ID: {})\n", 
+                                i + 1, 
+                                rec_item.entry.title, 
+                                rec_item.entry.mal_id
+                            ));
+                            if let Some(jpg_images) = &rec_item.entry.images.jpg {
+                                if let Some(image_url) = &jpg_images.image_url {
+                                    response_message.push_str(&format!("   Image: <{}>\n", image_url));
+                                }
+                            }
+                            response_message.push_str(&format!("   URL: <{}>\n", rec_item.entry.url));
+                        }
+                        if let Err(why) = msg.channel_id.say(&ctx.http, response_message).await {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    }
+                },
+                None => {
+                    if let Err(why) = msg.channel_id.say(&ctx.http, format!("An error occurred while fetching recommendations for MAL ID: {}. Please try again later.", mal_id)).await {
+                        println!("Error sending message: {:?}", why);
+                    }
+                }
+            }
+        }
         else if content.starts_with("!anime ") {
             let query = content.trim_start_matches("!anime ").trim();
 
             if query.is_empty() {
-                if let Err(why) = msg.reply(&ctx.http, "Please provide an anime name to search. Usage: `!anime <anime name>` or `!anime details <MAL_ID>`").await {
+                if let Err(why) = msg.reply(&ctx.http, "Please provide an anime name to search. Usage: `!anime <anime name>` or `!anime details <MAL_ID>` or `!anime recommendations <MAL_ID>`").await {
                     println!("Error sending message: {:?}", why);
                 }
                 return;
