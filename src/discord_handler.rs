@@ -252,13 +252,14 @@ impl EventHandler for Handler {
         let user_id = msg.author.id.to_string();
 
         if content == "!help" {
-            let help_message = "Hello! I'm an anime bot. Here are the commands you can use:\n\
-                                `!anime <anime name>`: Searches for anime and lists basic information.\n\
-                                `!anime details <MAL_ID>`: Fetches detailed information for a specific anime by its MyAnimeList ID.\n\
-                                `!anime recommendations <MAL_ID>`: Fetches anime recommendations based on a given MyAnimeList ID.\n\
-                                `!lain`: Get details about Serial Experiments Lain.\n\
-                                `!lain recommendations`: Get recommendations based on Serial Experiments Lain.\n\
-                                Example:\n\
+            let help_message = "Hello! I'm an anime bot. Here are the commands you can use:\n\n\
+                                • `!anime <anime name>`: Searches for anime and lists basic information.\n\n\
+                                • `!anime details <MAL_ID>`: Fetches detailed information for a specific anime by its MyAnimeList ID.\n\n\
+                                • `!anime recommendations <MAL_ID>`: Fetches anime recommendations based on a given MyAnimeList ID.\n\n\
+                                • `!lain`: Get details about Serial Experiments Lain.\n\n\
+                                • `!lain recommendations`: Get recommendations based on Serial Experiments Lain.\n\n\
+                                ----------------------------------------\n\n\
+                                **Example Usage:**\n\
                                 `!anime Attack on Titan`\n\
                                 `!anime details 16498` (for Attack on Titan)\n\
                                 `!anime recommendations 16498` (for Attack on Titan recommendations)\n\
@@ -266,7 +267,7 @@ impl EventHandler for Handler {
                                 `!lain recommendations`";
             
             let embed = CreateEmbed::new()
-                .title("Anime Bot Yardım Menüsü")
+                .title("Ferivonus Anime Bot Yardım Menüsü")
                 .description(help_message)
                 .timestamp(Timestamp::now());
 
