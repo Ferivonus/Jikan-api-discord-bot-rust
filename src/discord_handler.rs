@@ -12,7 +12,8 @@ use serde::{Serialize, Deserialize};
 
 pub struct Handler;
 
-const QUERIES_FILE: &str = "user_queries.json";
+// Changed the file path to include the "data" directory
+const QUERIES_FILE: &str = "data/user_queries.json";
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct UserQueries {
@@ -24,6 +25,10 @@ async fn load_queries() -> UserQueries {
         Ok(data) => serde_json::from_str(&data).unwrap_or_default(),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             println!("Queries file not found, creating a new one.");
+            // Ensure the 'data' directory exists before attempting to create the file
+            if let Err(dir_err) = fs::create_dir_all("data").await {
+                eprintln!("Error creating 'data' directory: {}", dir_err);
+            }
             UserQueries::default()
         },
         Err(e) => {
@@ -35,6 +40,11 @@ async fn load_queries() -> UserQueries {
 
 async fn save_queries(user_queries: &UserQueries) {
     let json_data = serde_json::to_string_pretty(user_queries).expect("Failed to serialize queries");
+    // Ensure the 'data' directory exists before attempting to save the file
+    if let Err(dir_err) = fs::create_dir_all("data").await {
+        eprintln!("Error creating 'data' directory before saving: {}", dir_err);
+        return;
+    }
     if let Err(e) = fs::write(QUERIES_FILE, json_data).await {
         eprintln!("Error saving queries to file: {}", e);
     }
