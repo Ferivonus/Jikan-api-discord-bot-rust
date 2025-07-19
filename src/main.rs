@@ -1,7 +1,6 @@
 use dotenv::dotenv;
 use std::env;
 
-use serenity::model::gateway::{Presence, Ready};
 use serenity::prelude::*; // Presence da burada kullanılmadığı için kaldırılabilir, ancak örneğinizde vardı.
 
 // Yeni modülleri tanımlıyoruz
